@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabase } from '@/lib/supabase';
+import { getSetting } from '@/lib/settings';
 
 export async function POST(req: Request) {
   try {
@@ -17,8 +18,7 @@ export async function POST(req: Request) {
       notes,
     } = await req.json();
 
-    // 1. Verify credentials and inputs
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keySecret = await getSetting('RAZORPAY_KEY_SECRET');
     if (!keySecret) {
       console.error('Razorpay key secret is missing!');
       return NextResponse.json(
@@ -34,7 +34,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Cryptographic signature verification
     const text = `${razorpay_order_id}|${razorpay_payment_id}`;
     const generated_signature = crypto
       .createHmac('sha256', keySecret)
@@ -48,29 +47,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Generate sequential order number in Indian Standard Time (IST)
     const now = new Date();
-    // Convert current time to IST (UTC + 5:30)
     const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
     const istTime = new Date(utcTime + 3600000 * 5.5);
 
     const year = istTime.getFullYear();
     const month = String(istTime.getMonth() + 1).padStart(2, '0');
     const day = String(istTime.getDate()).padStart(2, '0');
-    const dateStr = `${year}${month}${day}`; // YYYYMMDD
+    const dateStr = `${year}${month}${day}`;
 
-    // Define UTC boundaries for today in IST
     const startOfIstDay = new Date(istTime);
     startOfIstDay.setHours(0, 0, 0, 0);
-    // Convert back to UTC for query
     const startOfIstDayUTC = new Date(startOfIstDay.getTime() - 3600000 * 5.5).toISOString();
 
     const endOfIstDay = new Date(istTime);
     endOfIstDay.setHours(23, 59, 59, 999);
-    // Convert back to UTC for query
     const endOfIstDayUTC = new Date(endOfIstDay.getTime() - 3600000 * 5.5).toISOString();
 
-    // Query order count for today to get next sequential ID
     const { count, error: countError } = await supabase
       .from('orders')
       .select('id', { count: 'exact', head: true })
@@ -84,7 +77,6 @@ export async function POST(req: Request) {
     const nextSeq = String((count || 0) + 1).padStart(4, '0');
     const orderNumber = `HK-${dateStr}-${nextSeq}`;
 
-    // 4. Save order in Supabase
     const { data: orderData, error: insertError } = await supabase
       .from('orders')
       .insert({
@@ -95,7 +87,7 @@ export async function POST(req: Request) {
         order_type,
         items,
         total_amount,
-        payment_status: 'paid', // verified payment
+        payment_status: 'paid',
         razorpay_order_id,
         razorpay_payment_id,
         order_status: 'pending',
@@ -113,10 +105,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(orderData);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error verifying payment:', error);
+    const message = error instanceof Error ? error.message : 'Verification system error';
     return NextResponse.json(
-      { message: error.message || 'Verification system error' },
+      { message },
       { status: 500 }
     );
   }

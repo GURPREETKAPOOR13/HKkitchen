@@ -33,8 +33,8 @@ export default function AdminLoginPage() {
       // Set cookie for 1 day
       Cookies.set('hk_admin_session', 'true', { expires: 1, path: '/' });
       router.push('/admin');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to authenticate. Please try again.');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to authenticate. Please try again.');
     } finally {
       setLoading(false);
     }

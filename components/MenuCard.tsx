@@ -35,15 +35,14 @@ export default function MenuCard({
         !is_available ? 'opacity-65 filter grayscale-[30%]' : ''
       }`}
     >
-      {/* Featured Badge */}
-      {item.is_featured && is_available && (
-        <span className="absolute top-2 left-2 bg-[#f5a623] text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-          ⭐ Featured
-        </span>
-      )}
-
       {/* Main Content */}
-      <div className="p-4 flex-grow flex flex-col justify-between">
+      <div className={`p-4 flex-grow flex flex-col justify-between ${item.is_featured && is_available ? 'pt-8' : ''}`}>
+        {/* Featured Badge */}
+        {item.is_featured && is_available && (
+          <span className="absolute top-2 left-2 bg-[#f5a623] text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+            ⭐ Featured
+          </span>
+        )}
         <div>
           {/* Header */}
           <div className="flex justify-between items-start gap-2 mb-1">

@@ -205,7 +205,7 @@ export default function AdminMenuPage() {
         description: newItemDesc || null,
         is_available: newItemAvailable,
         is_featured: newItemFeatured,
-      } as any;
+      } as MenuItem;
       setMenuItems(prev => [...prev, fallbackItem]);
       alert('Item added locally (Supabase unavailable).');
     } finally {

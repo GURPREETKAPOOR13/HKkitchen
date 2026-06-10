@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, FileText, LayoutDashboard, LogOut, Loader2 } from 'lucide-react';
+import { ShoppingBag, FileText, LayoutDashboard, LogOut, Loader2, Settings } from 'lucide-react';
 import Cookies from 'js-cookie';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -94,6 +94,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <FileText size={16} />
                 <span className="hidden sm:inline">Orders</span>
+              </Link>
+
+              <Link
+                href="/admin/settings"
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
+                  pathname === '/admin/settings'
+                    ? 'bg-[#153b15] text-[#f5a623]'
+                    : 'text-white/80 hover:bg-[#153b15] hover:text-white'
+                }`}
+              >
+                <Settings size={16} />
+                <span className="hidden sm:inline">Settings</span>
               </Link>
               
               <button

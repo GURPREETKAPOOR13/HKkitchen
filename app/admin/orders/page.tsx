@@ -1,8 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Phone, MapPin, MessageSquare, AlertCircle, RefreshCw, Loader2, Calendar } from 'lucide-react';
+import { Phone, MapPin, MessageSquare, RefreshCw, Loader2, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+interface OrderItem {
+  id: number;
+  name: string;
+  price_min: number;
+  price_max?: number | null;
+  quantity: number;
+}
 
 interface Order {
   id: number;
@@ -11,7 +19,7 @@ interface Order {
   customer_phone: string;
   customer_address: string;
   order_type: 'delivery' | 'pickup';
-  items: any[];
+  items: OrderItem[];
   total_amount: number;
   payment_status: string;
   order_status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
@@ -242,7 +250,7 @@ export default function AdminOrdersPage() {
               <div className="bg-[#fdfbf7] border border-[#1a4a1a]/5 p-4 rounded-2xl mb-4 space-y-2">
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Items Ordered</span>
                 <ul className="space-y-1.5 divide-y divide-gray-100/50">
-                  {order.items.map((item: any, idx: number) => (
+                  {order.items.map((item: OrderItem, idx: number) => (
                     <li key={idx} className="flex justify-between items-center text-xs font-bold text-gray-800 pt-1.5 first:pt-0">
                       <span>{item.name} <span className="text-gray-400 font-semibold text-[10px]">x {item.quantity}</span></span>
                       <span className="text-gray-600">₹{item.price_min * item.quantity}</span>

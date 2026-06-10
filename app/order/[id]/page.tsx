@@ -6,6 +6,14 @@ import { useParams } from 'next/navigation';
 import { CheckCircle2, ShoppingBag, ArrowRight, MessageSquare, Loader2, Clock, Check, CookingPot, PackageCheck, Truck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
+interface OrderItem {
+  id: number;
+  name: string;
+  price_min: number;
+  price_max?: number | null;
+  quantity: number;
+}
+
 interface Order {
   id: number;
   order_number: string;
@@ -13,7 +21,7 @@ interface Order {
   customer_phone: string;
   customer_address: string;
   order_type: 'delivery' | 'pickup';
-  items: any[];
+  items: OrderItem[];
   total_amount: number;
   payment_status: string;
   order_status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
@@ -197,7 +205,7 @@ export default function OrderConfirmationPage() {
           </h3>
 
           <div className="divide-y divide-gray-100">
-            {order.items.map((item: any, idx: number) => (
+            {order.items.map((item: OrderItem, idx: number) => (
               <div key={idx} className="py-3 flex justify-between items-center text-sm gap-2">
                 <div className="flex-grow">
                   <p className="font-bold text-[#1a4a1a]">

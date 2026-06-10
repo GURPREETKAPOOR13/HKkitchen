@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { getSetting } from '@/lib/settings';
 
 export async function POST(req: Request) {
   try {
@@ -12,11 +13,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keyId = await getSetting('NEXT_PUBLIC_RAZORPAY_KEY_ID');
+    const keySecret = await getSetting('RAZORPAY_KEY_SECRET');
 
     if (!keyId || !keySecret) {
-      console.error('Razorpay credentials missing in environment!');
+      console.error('Razorpay credentials missing!');
       return NextResponse.json(
         { message: 'Payment gateway configuration error' },
         { status: 500 }
@@ -28,7 +29,6 @@ export async function POST(req: Request) {
       key_secret: keySecret,
     });
 
-    // Razorpay amount is in paise (1 INR = 100 paise)
     const options = {
       amount: Math.round(amount * 100),
       currency: 'INR',
@@ -42,10 +42,11 @@ export async function POST(req: Request) {
       amount: order.amount,
       currency: order.currency,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating Razorpay order:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create payment order';
     return NextResponse.json(
-      { message: error.message || 'Failed to create payment order' },
+      { message },
       { status: 500 }
     );
   }

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { getSetting } from '@/lib/settings';
 
 export async function POST(req: Request) {
   try {
     const { password } = await req.json();
-    const correctPassword = process.env.ADMIN_PASSWORD || 'hkkitchen2024';
+    const correctPassword = await getSetting('ADMIN_PASSWORD') || 'hkkitchen2024';
 
     if (password === correctPassword) {
       return NextResponse.json({ success: true });
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Admin login API error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server login error' },

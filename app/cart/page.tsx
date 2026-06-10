@@ -92,7 +92,7 @@ export default function CartPage() {
         theme: {
           color: '#1a4a1a', // Dark green theme
         },
-        handler: async function (response: any) {
+        handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
           // This executes on payment success
           try {
             setLoading(true);
@@ -142,9 +142,9 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
             // Attempt to open WhatsApp window, then redirect
             window.open(whatsappUrl, '_blank');
             router.push(`/order/${verifiedOrder.id}`);
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error('Payment verification error:', err);
-            setErrorMsg(err.message || 'Payment succeeded, but we failed to register your order. Please contact support.');
+            setErrorMsg(err instanceof Error ? err.message : 'Payment succeeded, but we failed to register your order. Please contact support.');
             setLoading(false);
           }
         },
@@ -155,11 +155,12 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
         },
       };
 
-      const paymentObject = new (window as any).Razorpay(options);
+      const RazorpayConstructor = (window as unknown as { Razorpay: new (options: unknown) => { open: () => void } }).Razorpay;
+      const paymentObject = new RazorpayConstructor(options);
       paymentObject.open();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Checkout error:', err);
-      setErrorMsg(err.message || 'An unexpected error occurred. Please try again.');
+      setErrorMsg(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
       setLoading(false);
     }
   };
