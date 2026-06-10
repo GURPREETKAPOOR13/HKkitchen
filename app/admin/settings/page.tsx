@@ -10,9 +10,7 @@ const SETTING_FIELDS = [
   { key: 'NEXT_PUBLIC_RAZORPAY_KEY_ID', label: 'Razorpay Key ID', type: 'text', secret: false },
   { key: 'RAZORPAY_KEY_SECRET', label: 'Razorpay Key Secret', type: 'password', secret: true },
   { key: 'ADMIN_PASSWORD', label: 'Admin Password', type: 'password', secret: true },
-  { key: 'NEXT_PUBLIC_WHATSAPP_NUMBER', label: 'WhatsApp Business Number', type: 'text', secret: false },
-  { key: 'WHATSAPP_CLOUD_API_TOKEN', label: 'WhatsApp Cloud API Token', type: 'password', secret: true },
-  { key: 'WHATSAPP_PHONE_NUMBER_ID', label: 'WhatsApp Phone Number ID', type: 'text', secret: false },
+  { key: 'NEXT_PUBLIC_WHATSAPP_NUMBER', label: 'WhatsApp Number', type: 'text', secret: false },
 ];
 
 export default function AdminSettingsPage() {
@@ -106,14 +104,6 @@ export default function AdminSettingsPage() {
         <div className="p-6 border-b border-gray-100 flex items-center gap-2">
           <SettingsIcon size={20} className="text-[#f5a623]" />
           <h2 className="text-lg font-bold text-[#1a4a1a]">API Keys & Configuration</h2>
-        </div>
-
-        <div className="px-6 py-3 bg-blue-50 border-b border-blue-100">
-          <p className="text-xs text-blue-700 font-medium">
-            💬 WhatsApp Cloud API (optional) — get a free token at{' '}
-            <a href="https://developers.facebook.com" target="_blank" rel="noopener noreferrer" className="underline">developers.facebook.com</a>.
-            Without it, order notifications will open via <code className="text-blue-800 bg-blue-100 px-1 rounded">wa.me</code> link (manual send).
-          </p>
         </div>
 
         <div className="divide-y divide-gray-100">

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabase } from '@/lib/supabase';
 import { getSetting } from '@/lib/settings';
-import { sendRestaurantNotification, sendCustomerConfirmation } from '@/lib/whatsapp';
 
 export async function POST(req: Request) {
   try {
@@ -104,27 +103,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
-    sendRestaurantNotification({
-      order_number: orderNumber,
-      customer_name,
-      customer_phone,
-      customer_address: customer_address || 'Self Pickup',
-      order_type,
-      items,
-      total_amount,
-      notes,
-    });
-    sendCustomerConfirmation({
-      order_number: orderNumber,
-      customer_name,
-      customer_phone,
-      customer_address: customer_address || 'Self Pickup',
-      order_type,
-      items,
-      total_amount,
-      notes,
-    });
 
     return NextResponse.json(orderData);
   } catch (error: unknown) {
