@@ -36,11 +36,14 @@ export async function POST(req: Request) {
     };
 
     const order = await razorpay.orders.create(options);
+    const whatsappNumber = await getSetting('NEXT_PUBLIC_WHATSAPP_NUMBER') || '919818066376';
 
     return NextResponse.json({
       id: order.id,
       amount: order.amount,
       currency: order.currency,
+      key_id: keyId,
+      whatsapp_number: whatsappNumber,
     });
   } catch (error: unknown) {
     console.error('Error creating Razorpay order:', error);

@@ -79,7 +79,7 @@ export default function CartPage() {
 
       // 2. Configure and open Razorpay Checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: rzpOrder.key_id,
         amount: rzpOrder.amount,
         currency: rzpOrder.currency,
         name: 'HK Kitchen',
@@ -136,7 +136,7 @@ ${cart.map((i) => `- ${i.name} x ${i.quantity} (₹${i.price_min * i.quantity})`
 *Address:* ${orderType === 'delivery' ? address : 'Self Pickup'}
 ${notes ? `*Instructions:* ${notes}` : ''}`;
 
-            const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919818066376';
+            const whatsappNumber = rzpOrder.whatsapp_number || '919818066376';
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappText)}`;
 
             // Attempt to open WhatsApp window, then redirect
