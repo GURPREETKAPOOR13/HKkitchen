@@ -1,6 +1,7 @@
 {
   "name": "hk-kitchen",
   "version": "0.1.0",
+  "description": "HK Kitchen - A restaurant ordering and management application built with Next.js and Supabase",
   "private": true,
   "scripts": {
     "dev": "next dev",
