@@ -285,7 +285,7 @@ export default function MenuPage() {
               {user ? (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/70 font-medium bg-white/10 px-3 py-2 rounded-2xl border border-white/15">
-                    {user.phone ? user.phone.slice(0, 5) + '*****' : user.email || 'Logged In'}
+                    {user.email || 'Logged In'}
                   </span>
                   <button
                     onClick={() => { clearStoredUser(); setUser(null); }}
