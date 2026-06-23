@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       order_type,
       items,
       total_amount,
-      payment_status: 'paid',
+      payment_status: 'pending',
       razorpay_order_id: `UPI_${Date.now()}`,
       razorpay_payment_id: `UPI_${Date.now()}`,
       order_status: 'pending',

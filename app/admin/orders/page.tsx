@@ -81,7 +81,6 @@ export default function AdminOrdersPage() {
   const handleStatusChange = async (id: number, newStatus: Order['order_status']) => {
     setUpdatingId(id);
     try {
-      // Optimistic update
       setOrders((prev) =>
         prev.map((order) => (order.id === id ? { ...order, order_status: newStatus } : order))
       );
@@ -95,7 +94,29 @@ export default function AdminOrdersPage() {
     } catch (error) {
       console.error('Error updating order status:', error);
       alert('Failed to update status. Please try again.');
-      fetchOrders(false); // Refetch to reset state
+      fetchOrders(false);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleMarkPaid = async (id: number) => {
+    setUpdatingId(id);
+    try {
+      setOrders((prev) =>
+        prev.map((order) => (order.id === id ? { ...order, payment_status: 'paid' } : order))
+      );
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_status: 'paid' })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking payment:', error);
+      alert('Failed to mark payment. Please try again.');
+      fetchOrders(false);
     } finally {
       setUpdatingId(null);
     }
@@ -385,9 +406,22 @@ export default function AdminOrdersPage() {
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Total Amount</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-lg text-[#f5a623]">₹{order.total_amount}</span>
-                    <span className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded uppercase">
-                      Paid
-                    </span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase border ${
+                    order.payment_status === 'paid'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                  }`}>
+                    {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                  </span>
+                  {order.payment_status === 'pending' && (
+                    <button
+                      onClick={() => handleMarkPaid(order.id)}
+                      disabled={updatingId === order.id}
+                      className="text-[10px] font-bold bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white px-2 py-1 rounded-lg transition-all"
+                    >
+                      {updatingId === order.id ? '...' : 'Mark Paid'}
+                    </button>
+                  )}
                   </div>
                 </div>
 

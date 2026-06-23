@@ -84,7 +84,12 @@ export default function PhoneLogin({ onClose, onLogin, initialUser }: PhoneLogin
       });
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed');
+      const msg = err instanceof Error ? err.message : 'Google login failed';
+      setError(
+        msg.includes('Unsupported provider')
+          ? 'Google login is not configured yet. Please use Phone OTP or contact the admin to enable Google OAuth in Supabase Dashboard.'
+          : msg
+      );
       setLoading(false);
     }
   }, []);

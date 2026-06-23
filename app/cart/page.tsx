@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import {
   ArrowLeft, ShoppingBag, Trash2, Plus, Minus, CreditCard, Loader2,
-  AlertCircle, MapPin, Bike, Smartphone, IndianRupee,
-  CheckCircle2, ExternalLink, Clock,
+  AlertCircle, MapPin, Bike, IndianRupee,
+  CheckCircle2, Clock,
 } from 'lucide-react';
 import { getCart, updateQuantity, removeFromCart, clearCart, CartItem } from '@/lib/cart';
 
@@ -21,11 +21,7 @@ export default function CartPage() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'upi' | 'cash'>('razorpay');
-  const [upiId, setUpiId] = useState('');
-  const [upiQrDataUrl, setUpiQrDataUrl] = useState('');
-  const [upiRef, setUpiRef] = useState('');
-  const [upiConfirmLoading, setUpiConfirmLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cash'>('razorpay');
   const [cashLoading, setCashLoading] = useState(false);
 
   const [deliveryConfig, setDeliveryConfig] = useState({
@@ -50,23 +46,8 @@ export default function CartPage() {
 
   useEffect(() => {
     setCart(getCart());
-    fetchUpiId();
     fetchDeliveryConfig();
   }, []);
-
-  async function fetchUpiId() {
-    try {
-      const res = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 1 }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.upi_id) setUpiId(data.upi_id);
-      }
-    } catch {}
-  }
 
   async function fetchDeliveryConfig() {
     try {
@@ -120,21 +101,6 @@ export default function CartPage() {
     );
   }
 
-  useEffect(() => {
-    if (paymentMethod === 'upi' && upiId && totalAmount > 0) {
-      generateUpiQr(upiId, totalAmount);
-    }
-  }, [paymentMethod, upiId, totalAmount]);
-
-  async function generateUpiQr(id: string, amount: number) {
-    try {
-      const QRCode = (await import('qrcode')).default;
-      const upiUrl = `upi://pay?pa=${encodeURIComponent(id)}&pn=HK%20Kitchen&am=${amount}&cu=INR&tn=Order%20at%20HK%20Kitchen`;
-      const url = await QRCode.toDataURL(upiUrl, { width: 280, margin: 2, color: { dark: '#1a4a1a', light: '#ffffff' } });
-      setUpiQrDataUrl(url);
-    } catch {}
-  }
-
   const handleUpdateQty = (id: number, qty: number) => {
     const updated = updateQuantity(id, qty);
     setCart([...updated]);
@@ -143,12 +109,6 @@ export default function CartPage() {
   const handleRemove = (id: number) => {
     const updated = removeFromCart(id);
     setCart([...updated]);
-  };
-
-  const openUpiApp = () => {
-    if (!upiId) return;
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=HK%20Kitchen&am=${totalAmount}&cu=INR&tn=Order%20at%20HK%20Kitchen`;
-    window.open(upiUrl, '_blank');
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -271,61 +231,6 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
       console.error('Checkout error:', err);
       setErrorMsg(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
       setLoading(false);
-    }
-  };
-
-  const handleUpiConfirm = async () => {
-    setErrorMsg('');
-
-    if (!kitchenOpen) {
-      setErrorMsg('Kitchen is currently closed. Please try again later.');
-      return;
-    }
-    setUpiConfirmLoading(true);
-
-    try {
-      const res = await fetch('/api/confirm-upi-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: name,
-          customer_phone: phone,
-          customer_address: orderType === 'delivery' ? address : 'Self Pickup',
-          order_type: orderType,
-          items: cart,
-          total_amount: totalAmount,
-          notes: notes,
-          upi_ref: upiRef || null,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Failed to save order');
-      }
-
-      const order = await res.json();
-      clearCart();
-
-      const whatsappText = `Hello HK Kitchen! 
-I have placed an order.
-*Order No:* ${order.order_number}
-*Name:* ${name}
-*Phone:* ${phone}
-*Type:* ${orderType.toUpperCase()}
-*Items:*
-${cart.map((i) => `- ${i.name} x ${i.quantity} (₹${i.price_min * i.quantity})`).join('\n')}
-*Total Amount:* ₹${totalAmount} Paid via UPI
-*Address:* ${orderType === 'delivery' ? address : 'Self Pickup'}
-${notes ? `*Instructions:* ${notes}` : ''}`;
-
-      const whatsappUrl = `https://wa.me/919818066376?text=${encodeURIComponent(whatsappText)}`;
-      window.open(whatsappUrl, '_blank');
-      router.push(`/order/${order.id}`);
-    } catch (err: unknown) {
-      console.error('UPI order error:', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to complete order. Please try again.');
-      setUpiConfirmLoading(false);
     }
   };
 
@@ -622,7 +527,7 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
               {/* Payment Method */}
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-stone-200/60 shadow-soft">
                 <h2 className="font-heading text-lg font-bold text-brand-700 mb-4 border-b border-stone-100 pb-3">Payment Method</h2>
-                <div className={`grid gap-3 ${canPayCash && upiId ? 'grid-cols-3' : !canPayCash || !upiId ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div className={`grid gap-3 ${canPayCash ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('razorpay')}
@@ -635,20 +540,6 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
                     <CreditCard size={16} />
                     <span>Pay Online</span>
                   </button>
-                  {upiId && (
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('upi')}
-                      className={`py-4 rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                        paymentMethod === 'upi'
-                          ? 'bg-brand-600 text-white shadow-md shadow-brand-600/10 ring-2 ring-brand-300'
-                          : 'bg-cream-100 text-stone-600 border border-stone-200/80 hover:bg-white'
-                      }`}
-                    >
-                      <Smartphone size={16} />
-                      <span>Scan & Pay</span>
-                    </button>
-                  )}
                   {canPayCash && (
                     <button
                       type="button"
@@ -679,63 +570,6 @@ ${notes ? `*Instructions:* ${notes}` : ''}`;
                     <><CreditCard size={20} /><span>Pay ₹{totalAmount} with Razorpay</span></>
                   )}
                 </button>
-              )}
-
-              {/* UPI */}
-              {paymentMethod === 'upi' && (
-                <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-stone-200/60 shadow-soft text-center space-y-5">
-                  {upiQrDataUrl ? (
-                    <>
-                      <div className="inline-block bg-white p-3 rounded-2xl shadow-md border border-stone-200">
-                        <img src={upiQrDataUrl} alt="UPI QR Code" className="w-52 h-52 mx-auto" />
-                      </div>
-                      <p className="text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-                        Scan this QR with any UPI app, or tap the button below to open your UPI app directly.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={openUpiApp}
-                        className="w-full flex items-center justify-center gap-2 bg-white border-2 border-brand-600 text-brand-700 font-bold py-3.5 px-6 rounded-2xl shadow-sm hover:bg-brand-50 transition-all duration-300 active:scale-[0.97]"
-                      >
-                        <ExternalLink size={18} />
-                        <span>Open UPI App</span>
-                      </button>
-                      <div className="border-t border-stone-100 pt-4 space-y-3">
-                        <input
-                          type="text"
-                          placeholder="UPI Ref. No. (optional)"
-                          value={upiRef}
-                          onChange={e => setUpiRef(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-2xl border border-stone-200/80 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-sm bg-white text-stone-800 placeholder:text-stone-400 text-center"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleUpiConfirm}
-                          disabled={upiConfirmLoading}
-                          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-700 via-brand-600 to-brand-700 hover:from-brand-800 hover:via-brand-700 hover:to-brand-800 disabled:from-stone-400 disabled:to-stone-400 text-white font-bold py-4 px-6 rounded-2xl shadow-soft-lg transition-all duration-300 active:scale-[0.97]"
-                        >
-                          {upiConfirmLoading ? (
-                            <><Loader2 className="animate-spin" size={20} /><span>Completing Order...</span></>
-                          ) : (
-                            <><CheckCircle2 size={20} /><span>I have paid — Complete Order</span></>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod('razorpay')}
-                          className="text-xs text-stone-400 hover:text-stone-600 underline underline-offset-2 transition-colors"
-                        >
-                          Pay online instead
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-stone-400 gap-2">
-                      <Loader2 className="animate-spin" size={24} />
-                      <p className="text-sm">Loading QR code...</p>
-                    </div>
-                  )}
-                </div>
               )}
 
               {/* Cash on Pickup */}
