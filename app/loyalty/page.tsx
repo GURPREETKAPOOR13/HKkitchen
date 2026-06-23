@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getStoredPhone } from '@/components/PhoneLogin';
+import { getStoredUser } from '@/components/PhoneLogin';
+import type { UserProfile } from '@/components/PhoneLogin';
 import LoyaltyCard from '@/components/LoyaltyCard';
 import { Loader2, QrCode } from 'lucide-react';
 
 export default function LoyaltyPage() {
-  const [phone, setPhone] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [qrUrl, setQrUrl] = useState('');
   const siteUrl = typeof window !== 'undefined' ? window.location.origin + '/?loyalty=1' : '';
 
   useEffect(() => {
-    setPhone(getStoredPhone());
+    setUser(getStoredUser());
   }, []);
 
   useEffect(() => {
@@ -34,9 +35,8 @@ export default function LoyaltyPage() {
           <p className="text-stone-500 text-sm mt-1">Loyalty & Rewards</p>
         </div>
 
-        {phone && <LoyaltyCard phone={phone} />}
+        {user && <LoyaltyCard user={user} />}
 
-        {/* QR Code Section */}
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-stone-200/60 shadow-soft text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
             <QrCode size={20} className="text-amber-500" />

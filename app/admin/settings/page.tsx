@@ -38,6 +38,14 @@ const SETTING_GROUPS: SettingsGroup[] = [
     ],
   },
   {
+    title: 'Auth & Email Settings',
+    icon: '🔐',
+    fields: [
+      { key: 'GMAIL_EMAIL', label: 'Gmail Email (for sending OTPs)' },
+      { key: 'GMAIL_APP_PASSWORD', label: 'Gmail App Password' },
+    ],
+  },
+  {
     title: 'Kitchen & Offers',
     icon: '🍳',
     fields: [
@@ -51,7 +59,7 @@ const SETTING_GROUPS: SettingsGroup[] = [
   },
 ];
 
-const SECRET_KEYS = ['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'RAZORPAY_KEY_SECRET', 'ADMIN_PASSWORD'];
+const SECRET_KEYS = ['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'RAZORPAY_KEY_SECRET', 'ADMIN_PASSWORD', 'GMAIL_APP_PASSWORD'];
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});

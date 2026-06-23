@@ -27,6 +27,8 @@ const DEFAULT_KEYS = [
   'LOYALTY_ENABLED',
   'LOYALTY_STARS',
   'LOYALTY_FREE_ITEM',
+  'GMAIL_EMAIL',
+  'GMAIL_APP_PASSWORD',
 ];
 
 export async function GET() {

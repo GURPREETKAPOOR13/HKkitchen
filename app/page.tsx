@@ -7,7 +7,8 @@ import { getCart, addToCart, updateQuantity, CartItem } from '@/lib/cart';
 import CategoryTabs from '@/components/CategoryTabs';
 import MenuCard, { MenuItem } from '@/components/MenuCard';
 import CartDrawer from '@/components/CartDrawer';
-import PhoneLogin, { getStoredPhone } from '@/components/PhoneLogin';
+import PhoneLogin, { getStoredUser, clearStoredUser } from '@/components/PhoneLogin';
+import type { UserProfile } from '@/components/PhoneLogin';
 import LoyaltyCard from '@/components/LoyaltyCard';
 
 interface Category {
@@ -84,11 +85,12 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [kitchenOpen, setKitchenOpen] = useState(true);
   const [todaysOffer, setTodaysOffer] = useState('');
-  const [phone, setPhone] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
-    setPhone(getStoredPhone());
+    const stored = getStoredUser();
+    if (stored) setUser(stored);
   }, []);
 
   useEffect(() => {
@@ -280,13 +282,13 @@ export default function MenuPage() {
               >
                 Browse Menu
               </a>
-              {phone ? (
+              {user ? (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/70 font-medium bg-white/10 px-3 py-2 rounded-2xl border border-white/15">
-                    {phone.slice(0, 5)}*****
+                    {user.phone ? user.phone.slice(0, 5) + '*****' : user.email || 'Logged In'}
                   </span>
                   <button
-                    onClick={() => { localStorage.removeItem('hk_phone'); setPhone(null); }}
+                    onClick={() => { clearStoredUser(); setUser(null); }}
                     className="bg-white/10 hover:bg-white/20 text-white border border-white/25 font-bold px-3 py-2 rounded-2xl transition-all active:scale-[0.97]"
                     title="Logout"
                   >
@@ -305,12 +307,12 @@ export default function MenuPage() {
             </div>
             {showLogin && (
               <div className="mt-6 max-w-xs mx-auto">
-                <PhoneLogin onClose={() => setShowLogin(false)} onLogin={(p) => { setPhone(p); setShowLogin(false); }} />
+                <PhoneLogin onClose={() => setShowLogin(false)} onLogin={(u) => { setUser(u); setShowLogin(false); }} />
               </div>
             )}
-            {phone && (
+            {user && (
               <div className="mt-6 max-w-xs mx-auto">
-                <LoyaltyCard phone={phone} />
+                <LoyaltyCard user={user} />
               </div>
             )}
           </div>

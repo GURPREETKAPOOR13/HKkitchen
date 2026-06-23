@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Star, Gift, Loader2, Award } from 'lucide-react';
+import type { UserProfile } from '@/components/PhoneLogin';
 
 interface LoyaltyData {
   enabled: boolean;
@@ -15,27 +16,27 @@ interface LoyaltyData {
 }
 
 interface LoyaltyCardProps {
-  phone: string | null;
+  user: UserProfile | null;
 }
 
-export default function LoyaltyCard({ phone }: LoyaltyCardProps) {
+export default function LoyaltyCard({ user }: LoyaltyCardProps) {
   const [data, setData] = useState<LoyaltyData | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!phone) return;
+    if (!user?.phone) return;
     setLoading(true);
     fetch('/api/loyalty', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone: user.phone }),
     })
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [phone]);
+  }, [user?.phone]);
 
-  if (!phone || !data || !data.enabled) return null;
+  if (!user?.phone || !data || !data.enabled) return null;
 
   if (loading) {
     return (
@@ -62,7 +63,6 @@ export default function LoyaltyCard({ phone }: LoyaltyCardProps) {
         )}
       </div>
 
-      {/* Stars */}
       <div className="grid grid-cols-5 gap-2 mb-3">
         {Array.from({ length: data.starsRequired }, (_, i) => {
           const filled = i < data.stamps;
@@ -82,7 +82,6 @@ export default function LoyaltyCard({ phone }: LoyaltyCardProps) {
         })}
       </div>
 
-      {/* Progress */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-stone-500 font-medium">
           {data.stamps} / {data.starsRequired} stamps
@@ -101,7 +100,6 @@ export default function LoyaltyCard({ phone }: LoyaltyCardProps) {
         </div>
       )}
 
-      {/* Reward info */}
       {data.rewardAvailable && (
         <div className="bg-green-50/80 border border-green-200/80 p-3 rounded-2xl mt-3 flex items-center gap-2">
           <Gift size={16} className="text-green-600 shrink-0" />
