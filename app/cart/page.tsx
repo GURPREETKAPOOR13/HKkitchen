@@ -7,7 +7,7 @@ import Script from 'next/script';
 import {
   ArrowLeft, ShoppingBag, Trash2, Plus, Minus, CreditCard, Loader2,
   AlertCircle, MapPin, Bike, IndianRupee,
-  CheckCircle2, Clock,
+  Clock,
 } from 'lucide-react';
 import { getCart, updateQuantity, removeFromCart, clearCart, CartItem } from '@/lib/cart';
 
