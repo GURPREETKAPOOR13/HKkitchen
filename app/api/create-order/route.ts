@@ -37,6 +37,7 @@ export async function POST(req: Request) {
 
     const order = await razorpay.orders.create(options);
     const whatsappNumber = await getSetting('NEXT_PUBLIC_WHATSAPP_NUMBER') || '919818066376';
+    const upiId = await getSetting('UPI_ID');
 
     return NextResponse.json({
       id: order.id,
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
       currency: order.currency,
       key_id: keyId,
       whatsapp_number: whatsappNumber,
+      upi_id: upiId,
     });
   } catch (error: unknown) {
     console.error('Error creating Razorpay order:', error);

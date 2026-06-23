@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { DollarSign, ShoppingBag, Clock, ArrowRight, ClipboardList, Loader2 } from 'lucide-react';
+import { DollarSign, ShoppingBag, Clock, ArrowRight, ClipboardList, Loader2, QrCode } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface Order {
@@ -205,45 +205,106 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Quick Actions Panel */}
-        <div className="bg-white rounded-3xl p-6 border border-[#1a4a1a]/5 shadow-sm space-y-4 h-fit">
-          <h3 className="font-bold text-[#1a4a1a] text-lg border-b border-gray-100 pb-3">Quick Links</h3>
-          
-          <div className="space-y-3">
-            <Link
-              href="/admin/orders"
-              className="flex items-center justify-between p-4 bg-gray-50 hover:bg-[#1a4a1a]/5 border border-gray-200/50 hover:border-[#1a4a1a]/15 rounded-2xl transition-all group"
-            >
-              <div>
-                <p className="font-bold text-[#1a4a1a] text-sm">Manage Active Orders</p>
-                <p className="text-[10px] text-gray-400">View orders and update status</p>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-[#1a4a1a] transition-colors" />
-            </Link>
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Quick Actions Panel */}
+          <div className="bg-white rounded-3xl p-6 border border-[#1a4a1a]/5 shadow-sm space-y-4 h-fit">
+            <h3 className="font-bold text-[#1a4a1a] text-lg border-b border-gray-100 pb-3">Quick Links</h3>
+            
+            <div className="space-y-3">
+              <Link
+                href="/admin/orders"
+                className="flex items-center justify-between p-4 bg-gray-50 hover:bg-[#1a4a1a]/5 border border-gray-200/50 hover:border-[#1a4a1a]/15 rounded-2xl transition-all group"
+              >
+                <div>
+                  <p className="font-bold text-[#1a4a1a] text-sm">Manage Active Orders</p>
+                  <p className="text-[10px] text-gray-400">View orders and update status</p>
+                </div>
+                <ArrowRight size={16} className="text-gray-400 group-hover:text-[#1a4a1a] transition-colors" />
+              </Link>
 
-            <Link
-              href="/admin/menu"
-              className="flex items-center justify-between p-4 bg-gray-50 hover:bg-[#1a4a1a]/5 border border-gray-200/50 hover:border-[#1a4a1a]/15 rounded-2xl transition-all group"
-            >
-              <div>
-                <p className="font-bold text-[#1a4a1a] text-sm">Update Menu Offerings</p>
-                <p className="text-[10px] text-gray-400">Toggle availability & edit pricing</p>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-[#1a4a1a] transition-colors" />
-            </Link>
+              <Link
+                href="/admin/settings"
+                className="flex items-center justify-between p-4 bg-gray-50 hover:bg-[#1a4a1a]/5 border border-gray-200/50 hover:border-[#1a4a1a]/15 rounded-2xl transition-all group"
+              >
+                <div>
+                  <p className="font-bold text-[#1a4a1a] text-sm">Settings</p>
+                  <p className="text-[10px] text-gray-400">Kitchen, delivery, and API config</p>
+                </div>
+                <ArrowRight size={16} className="text-gray-400 group-hover:text-[#1a4a1a] transition-colors" />
+              </Link>
 
-            <Link
-              href="/"
-              className="flex items-center justify-between p-4 bg-[#fdfbf7] hover:bg-[#f5a623]/5 border border-[#1a4a1a]/10 hover:border-[#f5a623]/20 rounded-2xl transition-all group"
-            >
-              <div>
-                <p className="font-bold text-[#1a4a1a] text-sm">Preview Shop Site</p>
-                <p className="text-[10px] text-gray-400">Go to public ordering menu page</p>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-[#f5a623] transition-colors" />
-            </Link>
+              <Link
+                href="/admin/menu"
+                className="flex items-center justify-between p-4 bg-gray-50 hover:bg-[#1a4a1a]/5 border border-gray-200/50 hover:border-[#1a4a1a]/15 rounded-2xl transition-all group"
+              >
+                <div>
+                  <p className="font-bold text-[#1a4a1a] text-sm">Update Menu Offerings</p>
+                  <p className="text-[10px] text-gray-400">Toggle availability & edit pricing</p>
+                </div>
+                <ArrowRight size={16} className="text-gray-400 group-hover:text-[#1a4a1a] transition-colors" />
+              </Link>
+
+              <Link
+                href="/"
+                target="_blank"
+                className="flex items-center justify-between p-4 bg-[#fdfbf7] hover:bg-[#f5a623]/5 border border-[#1a4a1a]/10 hover:border-[#f5a623]/20 rounded-2xl transition-all group"
+              >
+                <div>
+                  <p className="font-bold text-[#1a4a1a] text-sm">Preview Shop Site</p>
+                  <p className="text-[10px] text-gray-400">Go to public ordering menu page</p>
+                </div>
+                <ArrowRight size={16} className="text-gray-400 group-hover:text-[#f5a623] transition-colors" />
+              </Link>
+            </div>
           </div>
+
+          <QRCodeCard />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function QRCodeCard() {
+  const [qrUrl, setQrUrl] = useState('');
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://hk-kitchen.vercel.app';
+
+  useEffect(() => {
+    async function generate() {
+      try {
+        const QRCode = (await import('qrcode')).default;
+        const url = await QRCode.toDataURL(siteUrl, { width: 200, margin: 1, color: { dark: '#1a4a1a', light: '#ffffff' } });
+        setQrUrl(url);
+      } catch {}
+    }
+    generate();
+  }, [siteUrl]);
+
+  return (
+    <div className="bg-white rounded-3xl p-6 border border-[#1a4a1a]/5 shadow-sm space-y-4">
+      <h3 className="font-bold text-[#1a4a1a] text-lg border-b border-gray-100 pb-3 flex items-center gap-2">
+        <QrCode size={18} className="text-[#f5a623]" />
+        <span>Menu QR Code</span>
+      </h3>
+      <div className="text-center">
+        {qrUrl ? (
+          <>
+            <img src={qrUrl} alt="Menu QR Code" className="w-44 h-44 mx-auto border border-gray-200 p-2 rounded-2xl bg-white" />
+            <p className="text-[10px] text-gray-400 mt-2 font-medium">Scan to open the HK Kitchen menu</p>
+            <a
+              href={siteUrl}
+              target="_blank"
+              className="text-xs text-[#1a4a1a] hover:underline font-bold block mt-1"
+            >
+              {siteUrl.replace('https://', '')}
+            </a>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-44 text-gray-400">
+            <Loader2 className="animate-spin" size={24} />
+          </div>
+        )}
       </div>
     </div>
   );

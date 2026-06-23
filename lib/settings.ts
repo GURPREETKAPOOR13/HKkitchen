@@ -7,6 +7,28 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 let cache: Record<string, string> | null = null;
 
+const KNOWN_KEYS = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'NEXT_PUBLIC_RAZORPAY_KEY_ID',
+  'RAZORPAY_KEY_SECRET',
+  'ADMIN_PASSWORD',
+  'NEXT_PUBLIC_WHATSAPP_NUMBER',
+  'UPI_ID',
+  'DELIVERY_CHARGE',
+  'FREE_DELIVERY_MIN',
+  'KITCHEN_LAT',
+  'KITCHEN_LNG',
+  'DELIVERY_RADIUS_KM',
+  'KITCHEN_OPEN',
+  'RUSH_HOURS',
+  'TODAYS_OFFER',
+  'LOYALTY_ENABLED',
+  'LOYALTY_STARS',
+  'LOYALTY_FREE_ITEM',
+];
+
 export async function getSetting(key: string): Promise<string> {
   if (cache?.[key]) return cache[key];
   const envVal = process.env[key];
@@ -25,21 +47,11 @@ export async function getAllSettings(): Promise<Record<string, string>> {
     const { data } = await supabase.from('settings').select('*');
     const dbSettings: Record<string, string> = {};
     (data || []).forEach((s: { key: string; value: string }) => { dbSettings[s.key] = s.value; });
-    const keys = [
-      'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-      'SUPABASE_SERVICE_ROLE_KEY', 'NEXT_PUBLIC_RAZORPAY_KEY_ID',
-      'RAZORPAY_KEY_SECRET', 'ADMIN_PASSWORD', 'NEXT_PUBLIC_WHATSAPP_NUMBER',
-    ];
-    for (const key of keys) {
+    for (const key of KNOWN_KEYS) {
       merged[key] = dbSettings[key] || process.env[key] || '';
     }
   } catch {
-    const keys = [
-      'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-      'SUPABASE_SERVICE_ROLE_KEY', 'NEXT_PUBLIC_RAZORPAY_KEY_ID',
-      'RAZORPAY_KEY_SECRET', 'ADMIN_PASSWORD', 'NEXT_PUBLIC_WHATSAPP_NUMBER',
-    ];
-    for (const key of keys) {
+    for (const key of KNOWN_KEYS) {
       merged[key] = process.env[key] || '';
     }
   }

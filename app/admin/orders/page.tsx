@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Phone, MapPin, MessageSquare, RefreshCw, Loader2, Calendar } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Phone, MapPin, MessageSquare, RefreshCw, Loader2, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface OrderItem {
@@ -35,6 +35,9 @@ export default function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshCountdown, setRefreshCountdown] = useState(30);
+  const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   async function fetchOrders(showLoader = false) {
     if (showLoader) setLoading(true);
@@ -103,10 +106,51 @@ export default function AdminOrdersPage() {
     setRefreshCountdown(30);
   };
 
-  // Filter orders by status
-  const filteredOrders = statusFilter === 'all'
-    ? orders
-    : orders.filter((order) => order.order_status === statusFilter);
+  // Compute available months from orders
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    orders.forEach(o => {
+      const d = new Date(o.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.add(key);
+    });
+    return Array.from(months).sort((a, b) => b.localeCompare(a));
+  }, [orders]);
+
+  // Filter orders by status + month
+  const filteredOrders = orders.filter((order) => {
+    if (statusFilter !== 'all' && order.order_status !== statusFilter) return false;
+    if (monthFilter !== 'all') {
+      const d = new Date(order.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (key !== monthFilter) return false;
+    }
+    return true;
+  });
+
+  // Reset orders for selected month
+  const handleResetMonth = async () => {
+    if (!monthFilter || monthFilter === 'all') return;
+    setResetting(true);
+    try {
+      const [year, month] = monthFilter.split('-');
+      const startOfMonth = new Date(Number(year), Number(month) - 1, 1);
+      const endOfMonth = new Date(Number(year), Number(month), 0, 23, 59, 59, 999);
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString());
+      if (error) throw error;
+      setShowResetConfirm(false);
+      fetchOrders(true);
+    } catch (error) {
+      console.error('Error resetting month:', error);
+      alert('Failed to reset month. Please try again.');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // Formats date/time elegantly
   const formatDateTime = (isoString: string) => {
@@ -166,6 +210,75 @@ export default function AdminOrdersPage() {
             </button>
           );
         })}
+      </div>
+
+      {/* Month Filter + Reset */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Calendar size={16} className="text-gray-400" />
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Month:</span>
+          <button
+            onClick={() => setMonthFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+              monthFilter === 'all'
+                ? 'bg-[#1a4a1a] text-white border-[#1a4a1a]'
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            All
+          </button>
+          {availableMonths.map((m) => {
+            const [y, mo] = m.split('-');
+            const label = new Date(Number(y), Number(mo) - 1).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+            const count = orders.filter(o => {
+              const d = new Date(o.created_at);
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === m;
+            }).length;
+            return (
+              <button
+                key={m}
+                onClick={() => setMonthFilter(m)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                  monthFilter === m
+                    ? 'bg-[#1a4a1a] text-white border-[#1a4a1a]'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {showResetConfirm ? (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 p-2 rounded-xl">
+              <span className="text-[10px] font-bold text-red-600">Delete all orders for this month?</span>
+              <button
+                onClick={handleResetMonth}
+                disabled={resetting}
+                className="px-3 py-1 text-[10px] font-bold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all"
+              >
+                {resetting ? 'Deleting...' : 'Confirm'}
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-3 py-1 text-[10px] font-bold bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              disabled={monthFilter === 'all'}
+              className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <Trash2 size={12} />
+              <span>Reset Month</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Orders List */}
